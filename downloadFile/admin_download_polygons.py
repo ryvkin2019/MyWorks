@@ -66,9 +66,14 @@ def execute_query(group_id):
         sql_query2 = f"""DROP TEMPORARY TABLE polygon_for_geojson;"""
         connection.execute(text(sql_query2), {"group_id": group_id})
 
-        #convert to json
+        #convert to json ggg
         json_object=json.loads(records[0]['geojson'])
         print(json_object)
+
+
+
+
+
 
         #print(type(records[0]['geojson']))
 
