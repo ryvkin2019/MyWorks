@@ -75,7 +75,7 @@ def execute_query(group_id):
 
         som= {
         "imperial":{
-            "area": 0.247105
+            "area": 4.047
         }
         }
 
