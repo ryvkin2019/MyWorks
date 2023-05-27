@@ -28,7 +28,9 @@ def execute_query(group_id):
                 'row_span', pp2.value,
                 'tree_span',pp3.value,
                 'cultivar',cu.token,
-                'year', pl.planted_on
+                'year', pl.planted_on,
+                'som', c2.som,
+                'area', p.area
             ),
             'geometry', p.geometry
         ) AS feature
@@ -40,6 +42,7 @@ def execute_query(group_id):
         INNER JOIN plantings pl ON p.id = pl.block_id
         INNER JOIN cultivars cu ON cu.id = pl.cultivar_id
         INNER JOIN crops c ON c.id = pp.value
+        INNER join companies c2 on c2.id=p.company_id 
         WHERE gp.group_id = {group_id}
           AND p.archived_at IS NULL
           AND p.deleted_at IS NULL
@@ -70,11 +73,17 @@ def execute_query(group_id):
         json_object=json.loads(records[0]['geojson'])
         print(json_object)
 
+        som= {
+        "imperial":{
+            "area": 0.247105
+        }
+        }
 
+        for i in json_object["features"]:
+            i["properties"]["area"]= int(i["properties"]["area"]) / som["imperial"]["area"]
 
-
-
-
+        print("2")
+        print(json_object)
         #print(type(records[0]['geojson']))
 
     # Open a file for writing
@@ -82,7 +91,7 @@ def execute_query(group_id):
         # Convert Python object to JSON and write it to the file
         print(type(json_object))
         json.dump(json_object, f)
-
+        print("4")
 
 
 group_id = 1394
