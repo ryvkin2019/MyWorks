@@ -18,7 +18,7 @@ def execute_query(group_id):
 
         sql_query = f"""
         CREATE TEMPORARY TABLE polygon_for_geojson
-        AS
+        (
         SELECT JSON_OBJECT(
             'type', 'Feature',
             'properties', JSON_OBJECT(
@@ -47,7 +47,7 @@ def execute_query(group_id):
           AND p.archived_at IS NULL
           AND p.deleted_at IS NULL
           AND p.`type` = 'plot'
-         and pl.deleted_at is not NULL ;
+         and pl.deleted_at is NULL) ;
         """
 
         connection.execute(text(sql_query), {"group_id": group_id})
@@ -69,25 +69,39 @@ def execute_query(group_id):
         sql_query2 = f"""DROP TEMPORARY TABLE polygon_for_geojson;"""
         connection.execute(text(sql_query2), {"group_id": group_id})
 
-        #convert to json ggg
-        json_object=json.loads(records[0]['geojson'])
+        #convert to json
+        json_object=json.loads(records[0]["geojson"])
         print(json_object)
 
-        som= {
-        "imperial":{
-            "area": 4.047
-        }
-        }
+        "ISSUE, NEED REPLASE ' '  to " " "
 
+
+        som= {
+            "imperial":{
+                "area": 4.047, "row_span": 3.281, "tree_span": 3.281
+        },
+            "si":{
+                "area": 10,
+            }
+        }
+    #test = json_object["features"][0]["properties"]["som"]
+
+
+    #validation what som
+    if (json_object["features"][0]["properties"]["som"]=="imperial"):
+        for i in json_object["features"]:
+            i["properties"]["area"]= int(i["properties"]["area"]) / som["imperial"]["area"]
+            i["properties"]["area"] = int(i["properties"]["area"]) * som["imperial"]["area"]
+    elif (json_object["features"][0]["properties"]["som"]=="si"):
         for i in json_object["features"]:
             i["properties"]["area"]= int(i["properties"]["area"]) / som["imperial"]["area"]
 
-        print("2")
-        print(json_object)
+    print("2")
+    print(json_object)
         #print(type(records[0]['geojson']))
 
     # Open a file for writing
-    with open('json_object.geojson', 'w') as f:
+    with open("json_object.geojson", "w") as f:
         # Convert Python object to JSON and write it to the file
         print(type(json_object))
         json.dump(json_object, f)
