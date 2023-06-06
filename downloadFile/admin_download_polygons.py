@@ -47,7 +47,7 @@ def execute_query(group_id):
           AND p.archived_at IS NULL
           AND p.deleted_at IS NULL
           AND p.`type` = 'plot'
-         and pl.deleted_at is NULL) ;
+         and pl.deleted_at is not NULL) ;
         """
 
         connection.execute(text(sql_query), {"group_id": group_id})
@@ -88,27 +88,30 @@ def execute_query(group_id):
 
 
     #validation what som
-    if (json_object["features"][0]["properties"]["som"]=="imperial"):
+    if (json_object["features"][0]["properties"]["som"]=="imperial" or json_object["features"][0]["properties"]["som"]=="usc"):
         for i in json_object["features"]:
             i["properties"]["area"]= int(i["properties"]["area"]) / som["imperial"]["area"]
-            i["properties"]["area"] = int(i["properties"]["area"]) * som["imperial"]["area"]
-    elif (json_object["features"][0]["properties"]["som"]=="si"):
+            i["properties"]["row_span"] = int(i["properties"]["row_span"]) * som["imperial"]["row_span"]
+            i["properties"]["tree_span"] = int(i["properties"]["tree_span"]) * som["imperial"]["tree_span"]
+    elif (json_object["features"][0]["properties"]["som"]=="si" or json_object["features"][0]["properties"]["som"]=="si_pound"):
         for i in json_object["features"]:
             i["properties"]["area"]= int(i["properties"]["area"]) / som["imperial"]["area"]
 
     print("2")
     print(json_object)
         #print(type(records[0]['geojson']))
-
+    print("3")
     # Open a file for writing
     with open("json_object.geojson", "w") as f:
         # Convert Python object to JSON and write it to the file
-        print(type(json_object))
-        json.dump(json_object, f)
-        print("4")
+        # print(type(json_object))
+        j = json.dumps(json_object)
+        print(j)
+        json.dump(json_object, f) # correct
 
 
-group_id = 1394
+
+group_id = 2005
 
 execute_query(group_id)
 
