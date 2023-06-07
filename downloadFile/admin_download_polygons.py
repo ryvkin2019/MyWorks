@@ -8,7 +8,7 @@ import json
 #engine = create_engine(f"mysql://admin:205Pishpeshonim@qa.cqjtnaxf7qxk.eu-west-1.rds.amazonaws.com/fieldin")
 engine = create_engine(f"mysql://admin:205Pishpeshonim@production-repl1-dev.c59qewjoyitg.eu-west-1.rds.amazonaws.com/fieldin")
 
-print('0')
+# validation print('0')
 
 def execute_query(group_id):
     # Create a cursor object to interact with the database
@@ -27,7 +27,13 @@ def execute_query(group_id):
                 'id', p.id,
                 'row_span', pp2.value,
                 'tree_span',pp3.value,
-                'cultivar',cu.token,
+                'cultivars', (
+        SELECT JSON_ARRAYAGG(JSON_OBJECT('cultivar', cu.token))
+        FROM plantings pl2
+        INNER JOIN cultivars cu ON cu.id = pl2.cultivar_id
+        WHERE pl2.block_id = p.id
+        AND pl2.deleted_at IS NULL
+    ),
                 'year', pl.planted_on,
                 'som', c2.som,
                 'area', p.area
@@ -47,11 +53,12 @@ def execute_query(group_id):
           AND p.archived_at IS NULL
           AND p.deleted_at IS NULL
           AND p.`type` = 'plot'
-         and pl.deleted_at is not NULL) ;
+         and pl.deleted_at is  NULL
+         Group by p.id) ;
         """
 
         connection.execute(text(sql_query), {"group_id": group_id})
-        print('1')
+        # validation print('1')
 
         #pd.read_sql(text(sql_query), connection)
        # devices_table.to_dict(orient='records')
@@ -64,14 +71,14 @@ def execute_query(group_id):
 
         devices_table = pd.read_sql(text(sql_query3), connection)
         records = devices_table.to_dict(orient='records')
-        print(records)
 
         sql_query2 = f"""DROP TEMPORARY TABLE polygon_for_geojson;"""
         connection.execute(text(sql_query2), {"group_id": group_id})
 
         #convert to json
         json_object=json.loads(records[0]["geojson"])
-        print(json_object)
+       #validation print(json_object)
+        #print(json_object["features"])
 
         "ISSUE, NEED REPLASE ' '  to " " "
 
@@ -86,21 +93,23 @@ def execute_query(group_id):
         }
     #test = json_object["features"][0]["properties"]["som"]
 
-
+    j = json.dumps(json_object)
+    print(j)
     #validation what som
-    if (json_object["features"][0]["properties"]["som"]=="imperial" or json_object["features"][0]["properties"]["som"]=="usc"):
+    if(json_object["features"]== None):
+        print("no value")
+    elif (json_object["features"][0]["properties"]["som"]=="imperial" or json_object["features"][0]["properties"]["som"]=="usc"):
         for i in json_object["features"]:
             i["properties"]["area"]= int(i["properties"]["area"]) / som["imperial"]["area"]
-            i["properties"]["row_span"] = int(i["properties"]["row_span"]) * som["imperial"]["row_span"]
-            i["properties"]["tree_span"] = int(i["properties"]["tree_span"]) * som["imperial"]["tree_span"]
+            i["properties"]["row_span"] = int(float(i["properties"]["row_span"])) * som["imperial"]["row_span"]
+            i["properties"]["tree_span"] = int(float(i["properties"]["tree_span"])) * som["imperial"]["tree_span"]
     elif (json_object["features"][0]["properties"]["som"]=="si" or json_object["features"][0]["properties"]["som"]=="si_pound"):
         for i in json_object["features"]:
-            i["properties"]["area"]= int(i["properties"]["area"]) / som["imperial"]["area"]
+            i["properties"]["area"]= int(i["properties"]["area"]) / som["si"]["area"]
 
-    print("2")
-    print(json_object)
+    #validation print("2")
         #print(type(records[0]['geojson']))
-    print("3")
+    #validation print("3")
     # Open a file for writing
     with open("json_object.geojson", "w") as f:
         # Convert Python object to JSON and write it to the file
@@ -111,7 +120,7 @@ def execute_query(group_id):
 
 
 
-group_id = 2005
+group_id = 1766
 
 execute_query(group_id)
 
